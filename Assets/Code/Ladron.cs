@@ -10,12 +10,16 @@ public class Ladron : MonoBehaviour
     enum Estados { Caminando, Huyendo, Atrapado, Escondido}
     GameObject[] puntosRecorrido;
     Estados estadoActual;
+    GameObject jaula;
+    bool encerrado;
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         agent = rb.GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
+        jaula = GameObject.FindGameObjectWithTag("Jaula");
+        encerrado = false;
     }
 
     // Update is called once per frame
@@ -26,7 +30,9 @@ public class Ladron : MonoBehaviour
             case Estados.Caminando:
                 Caminando();
                 break;
+            case Estados.Atrapado:
 
+                break;
 
 
             default:
@@ -47,4 +53,19 @@ public class Ladron : MonoBehaviour
     {
         agent.SetDestination(puntosRecorrido[Random.Range(0, puntosRecorrido.Length - 1)].transform.position);
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+       
+        if (other.gameObject.CompareTag("Agente") && !encerrado) // DESACTIVAR TRIGGER
+        {
+            Debug.Log("Entro alguien al trigger");
+            estadoActual = Estados.Atrapado;
+            agent.ResetPath();
+            agent.SetDestination(jaula.transform.position);
+            encerrado = true;
+        }
+    }
+
+    public bool getEncerrado() { return encerrado; }
 }
