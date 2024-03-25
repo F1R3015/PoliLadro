@@ -23,7 +23,10 @@ public class Agente : MonoBehaviour
 
     [SerializeField]
     Text debugEstadoActual;
-
+    [SerializeField]
+    float encerrandoStopingDistance;
+    [SerializeField]
+    float velocidadCorriendo;
 
     // Start is called before the first frame update
     void Start()
@@ -70,14 +73,12 @@ public class Agente : MonoBehaviour
         {
             CambiarDestino();
         }
-        //IGNORAR LADRON ENCERRADO
-        if(Physics.Raycast(transform.position,transform.forward,out hit) && hit.transform.gameObject.CompareTag("Ladron")) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
+        
+        if(Physics.SphereCast(transform.position,10f,transform.forward,out hit) && hit.transform.gameObject.CompareTag("Ladron")) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
         {
-            if (!hit.transform.GetComponent<Ladron>().getEncerrado())
-            {
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
-            }
+                agent.speed = velocidadCorriendo;
         }
 
         
@@ -90,6 +91,7 @@ public class Agente : MonoBehaviour
         
         if (Physics.Raycast(transform.position, target.transform.position - transform.position, out hit) && !hit.transform.gameObject.CompareTag("Ladron")) // Si el objetivo desaparece, sigue hasta la ultima posicion vista / MEJORA: QUE VAYA HASTA DONDE PREVEA DESAPARECIO
         {
+            Debug.Log("DEJO DE VERLO");
             ultimaPosicion = target.transform.position;
             agent.SetDestination(ultimaPosicion);
             estadoActual = Estados.Rastreando;
@@ -99,15 +101,12 @@ public class Agente : MonoBehaviour
 
     void Rastreando()
     {
-        if (Physics.Raycast(transform.position, transform.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección
+        if (Physics.SphereCast(transform.position,10f, transform.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección
         {
             if (hit.transform.gameObject.CompareTag("Ladron")) // Probar que solo lo hace con ladrones / Ver si es el mismo para decidir que hacer
             {
-                if (!hit.transform.GetComponent<Ladron>().getEncerrado())
-                {
                     target = hit.transform.gameObject;
                     estadoActual = Estados.Persiguiendo;
-                }
             }
         }
 
@@ -115,6 +114,7 @@ public class Agente : MonoBehaviour
         {
             target = null;
             estadoActual = Estados.Patruyando;
+            agent.speed = 3.5f;
         }
     }
 
@@ -124,6 +124,8 @@ public class Agente : MonoBehaviour
         {
             CambiarDestino();
             estadoActual = Estados.Patruyando;
+            agent.stoppingDistance = 0f;
+            agent.speed = 3.5f;
         }
     }
 
@@ -140,14 +142,16 @@ public class Agente : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        
         if (other.gameObject.CompareTag("Ladron") && estadoActual != Estados.Encerrando)
         {
-            if (!other.gameObject.GetComponent<Ladron>().getEncerrado())
-            {
+                
+                agent.SetDestination(jaula.transform.position);
                 estadoActual = Estados.Encerrando;
                 target = null;
-                agent.SetDestination(jaula.transform.position);
-            }
+                agent.stoppingDistance = encerrandoStopingDistance;
+                agent.speed = 3.5f;
+
         }
     }
 }

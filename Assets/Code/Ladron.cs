@@ -11,7 +11,6 @@ public class Ladron : MonoBehaviour
     GameObject[] puntosRecorrido;
     Estados estadoActual;
     GameObject jaula;
-    bool encerrado;
     // Start is called before the first frame update
     void Start()
     {
@@ -19,7 +18,7 @@ public class Ladron : MonoBehaviour
         agent = rb.GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
-        encerrado = false;
+
     }
 
     // Update is called once per frame
@@ -57,15 +56,14 @@ public class Ladron : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
        
-        if (other.gameObject.CompareTag("Agente") && !encerrado) // DESACTIVAR TRIGGER
+        if (other.gameObject.CompareTag("Agente"))
         {
-            Debug.Log("Entro alguien al trigger");
             estadoActual = Estados.Atrapado;
             agent.ResetPath();
             agent.SetDestination(jaula.transform.position);
-            encerrado = true;
+            GetComponent<SphereCollider>().enabled = false;
         }
     }
 
-    public bool getEncerrado() { return encerrado; }
+    
 }
