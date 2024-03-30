@@ -19,7 +19,7 @@ public class Agente : MonoBehaviour
     GameObject target;
     Vector3 ultimaPosicion;
     GameObject jaula;
-
+    Transform[] rayCasters = new Transform[5];
 
     [SerializeField]
     Text debugEstadoActual;
@@ -35,6 +35,16 @@ public class Agente : MonoBehaviour
         agent = rb.GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
+        int cont = 0;
+        Transform[] t = GetComponentsInChildren<Transform>();
+        for (int i = 0; i < t.Length; i++)
+        {
+            if (t[i].CompareTag("RayCaster"))
+            {
+                rayCasters[cont] = t[i];
+                cont++;
+            }
+        }
     }
 
     // Update is called once per frame
@@ -79,12 +89,15 @@ public class Agente : MonoBehaviour
             CambiarDestino();
         }
         
-        if(Physics.Raycast(transform.position,transform.forward,out hit) && hit.transform.gameObject.CompareTag("Ladron")) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
-        {//En vez de tag, mejor layer?
+        foreach(Transform t in rayCasters)
+        {
+            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron")) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
+            {//En vez de tag, mejor layer?
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
                 agent.speed = velocidadCorriendo;
-                hit.transform.SendMessage("Detectado",gameObject);
+                hit.transform.SendMessage("Detectado", gameObject);
+            }
         }
 
         
