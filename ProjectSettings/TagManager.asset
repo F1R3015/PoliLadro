@@ -9,6 +9,8 @@ TagManager:
   - Agente
   - Jaula
   - Caja
+  - RayCaster
+  - Arma
   layers:
   - Default
   - TransparentFX

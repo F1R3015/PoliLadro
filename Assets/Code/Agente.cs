@@ -28,6 +28,8 @@ public class Agente : MonoBehaviour
     [SerializeField]
     float velocidadCorriendo;
 
+    bool llevandoArma;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -35,6 +37,7 @@ public class Agente : MonoBehaviour
         agent = rb.GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
+        llevandoArma = false;
         int cont = 0;
         Transform[] t = GetComponentsInChildren<Transform>();
         for (int i = 0; i < t.Length; i++)
@@ -115,16 +118,30 @@ public class Agente : MonoBehaviour
             estadoActual = Estados.Rastreando;
         }
 
+        foreach (Transform t in rayCasters)
+        {
+            if (Physics.Raycast(transform.position, t.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo
+            {
+                if (hit.transform.gameObject.CompareTag("Ladron") && Vector3.Distance(transform.position,target.transform.position) > Vector3.Distance(transform.position,hit.transform.position)) // Probar que solo lo hace con ladrones 
+                {
+                    target = hit.transform.gameObject;
+                }
+            }
+        }
+
     }
 
     void Rastreando()
     {
-        if (Physics.SphereCast(transform.position,10f, transform.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección
+        foreach(Transform t in rayCasters)
         {
-            if (hit.transform.gameObject.CompareTag("Ladron")) // Probar que solo lo hace con ladrones / Ver si no es el mismo para decidir que hacer
+            if (Physics.Raycast(transform.position, t.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo
             {
+                if (hit.transform.gameObject.CompareTag("Ladron")) // Probar que solo lo hace con ladrones 
+                {
                     target = hit.transform.gameObject;
                     estadoActual = Estados.Persiguiendo;
+                }
             }
         }
 
@@ -132,7 +149,7 @@ public class Agente : MonoBehaviour
         {
             target = null;
             estadoActual = Estados.Patruyando;
-            agent.speed = 3.5f;
+            agent.speed = 3.5f; // SERIALIZEDFIELD
         }
     }
 
@@ -173,6 +190,10 @@ public class Agente : MonoBehaviour
             }  
                 
 
+        }
+        if (other.gameObject.CompareTag("Arma") && estadoActual != Estados.Encerrando && !llevandoArma)
+        {
+            other.transform.SetParent(transform);
         }
     }
 }

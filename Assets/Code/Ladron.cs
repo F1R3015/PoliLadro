@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
+using static UnityEngine.GraphicsBuffer;
 public class Ladron : MonoBehaviour
 {
 
@@ -18,7 +19,8 @@ public class Ladron : MonoBehaviour
     GameObject jaula;
     GameObject enemigos;
     GameObject caja;
-    
+    Transform[] rayCasters = new Transform[5];
+
     // Start is called before the first frame update
 
     public string getEstadoActual()
@@ -32,7 +34,16 @@ public class Ladron : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
-
+        int cont = 0;
+        Transform[] t = GetComponentsInChildren<Transform>();
+        for (int i = 0; i < t.Length; i++)
+        {
+            if (t[i].CompareTag("RayCaster"))
+            {
+                rayCasters[cont] = t[i];
+                cont++;
+            }
+        }
     }
 
 
@@ -115,11 +126,14 @@ public class Ladron : MonoBehaviour
             CambiarDestino();
             enemigos = null;
         }
-        if(Physics.Raycast(gameObject.transform.position, gameObject.transform.forward,out hit) && hit.transform.CompareTag("Caja"))
+       
+        foreach (Transform t in rayCasters)
         {
-            Debug.Log("A ESCONDERSE");
-            estadoActual = Estados.Escondido;
-            agent.SetDestination(hit.transform.position);
+            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Caja"))
+            {
+                estadoActual = Estados.Escondido;
+                agent.SetDestination(hit.transform.position);
+            }
         }
     }
 
@@ -167,6 +181,8 @@ public class Ladron : MonoBehaviour
             GetComponent<CapsuleCollider>().enabled = false;
             }
         }
+
+        
     }
 
     
