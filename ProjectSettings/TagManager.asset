@@ -8,6 +8,7 @@ TagManager:
   - Ladron
   - Agente
   - Jaula
+  - Caja
   layers:
   - Default
   - TransparentFX
