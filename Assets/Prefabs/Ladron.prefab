@@ -228,7 +228,7 @@ NavMeshAgent:
   m_AngularSpeed: 120
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
+  m_AutoBraking: 0
   m_AutoRepath: 1
   m_Height: 2
   m_BaseOffset: 1
@@ -277,6 +277,10 @@ MonoBehaviour:
   duracionAturdido: 2
   velocidadBase: 3.5
   velocidadHuida: 4
+  tiempoEscondido: 7
+  distanciaParadaBase: 0
+  distanciaParadaHuida: 2
+  anguloCamino: 30
 --- !u!135 &6713029585102169285
 SphereCollider:
   m_ObjectHideFlags: 0

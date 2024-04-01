@@ -101,7 +101,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
                 agent.speed = velocidadCorriendo;
-                agent.autoBraking = false;
+                
                 hit.transform.SendMessage("Detectado", gameObject);
             }
         }
@@ -120,7 +120,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
             ultimaPosicion = target.transform.position;
             agent.SetDestination(ultimaPosicion + target.transform.forward*0.3f);
             target = null;
-            agent.autoBraking = true;
+            agent.stoppingDistance = 1;
             estadoActual = Estados.Rastreando;
         }
 
@@ -141,7 +141,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
             }
         }
 
-        if(llevandoArma && Vector3.Distance(transform.position,target.transform.position) <= distanciaDisparo)
+        if(target != null && llevandoArma && Vector3.Distance(transform.position,target.transform.position) <= distanciaDisparo && Physics.Raycast(transform.position, target.transform.position - transform.position, out hit) && hit.transform.gameObject.CompareTag("Ladron"))
         {
             arma.transform.LookAt(target.transform.position);
             if (!disparando) {
@@ -156,8 +156,8 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
 
     IEnumerator Dispara()
     {
+        Instantiate(prefabBala, arma.transform.position + (arma.transform.forward)*0.5f, arma.transform.rotation);
         yield return new WaitForSeconds(1);
-        Instantiate(prefabBala, arma.transform.position + (arma.transform.forward), arma.transform.rotation);
         llevandoArma = false;
         disparando = false;
         Destroy(arma);
@@ -218,7 +218,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
                 target = null;
                 agent.stoppingDistance = encerrandoStopingDistance;
                 agent.speed = velocidadBase;
-                agent.autoBraking = true;
+                
             }  
                 
 
