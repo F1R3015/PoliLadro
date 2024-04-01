@@ -11,6 +11,7 @@ TagManager:
   - Caja
   - RayCaster
   - Arma
+  - Bala
   layers:
   - Default
   - TransparentFX
