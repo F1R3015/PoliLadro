@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 
-public class Agente : MonoBehaviour
+public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
 {
 
     Rigidbody rb;
@@ -24,12 +24,11 @@ public class Agente : MonoBehaviour
     [SerializeField]
     GameObject prefabBala;
 
-    [SerializeField]
-    Text debugEstadoActual;
-    [SerializeField]
-    float encerrandoStopingDistance;
-    [SerializeField]
-    float velocidadCorriendo;
+    [SerializeField] float distanciaDisparo;
+    [SerializeField] float paradaBase;
+    [SerializeField] float encerrandoStopingDistance;
+    [SerializeField] float velocidadBase;
+    [SerializeField] float velocidadCorriendo;
 
     bool llevandoArma;
     bool disparando;
@@ -86,23 +85,23 @@ public class Agente : MonoBehaviour
         }
 
 
-        debugEstadoActual.text = estadoActual.ToString();
     }
 
     void Patruyando()
     {
-        if (agent.remainingDistance <= agent.stoppingDistance) // Si llega al destino se mueve hacia otro  / ¿PROBLEMAS CON ARMA?
+        if (agent.remainingDistance <= agent.stoppingDistance) // Si llega al destino se mueve hacia otro
         {
             CambiarDestino();
         }
         
         foreach(Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron") && estadoActual == Estados.Patruyando) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
-            {//En vez de tag, mejor layer?
+            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron") && estadoActual == Estados.Patruyando) // Si detecta un ladron, cambia al estado persiguiendo
+            {
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
                 agent.speed = velocidadCorriendo;
+                agent.autoBraking = false;
                 hit.transform.SendMessage("Detectado", gameObject);
             }
         }
@@ -110,28 +109,29 @@ public class Agente : MonoBehaviour
         
     }
 
-    void Persiguiendo() // EN PERSIGUIENDO AUMENTAR DISTANCIA DE PARADA
+    void Persiguiendo()
     {
         Debug.DrawRay(transform.position, target.transform.position - transform.position);
         Seguir(target);
         
-        if (Physics.Raycast(transform.position, target.transform.position - transform.position, out hit) && !hit.transform.gameObject.CompareTag("Ladron")) // Si el objetivo desaparece, sigue hasta la ultima posicion vista / ¿CAMBIAR PARA QUE NO LO VEA?
+        if (Physics.Raycast(transform.position, target.transform.position - transform.position, out hit) && !hit.transform.gameObject.CompareTag("Ladron")) 
         {
             
             ultimaPosicion = target.transform.position;
             agent.SetDestination(ultimaPosicion + target.transform.forward*0.3f);
             target = null;
+            agent.autoBraking = true;
             estadoActual = Estados.Rastreando;
         }
 
         foreach (Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Persiguiendo) // 
+            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Persiguiendo)
             {
-                if (hit.transform.gameObject.CompareTag("Ladron") && !hit.transform.gameObject.Equals(target)) // Probar que solo lo hace con ladrones 
+                if (hit.transform.gameObject.CompareTag("Ladron") && !hit.transform.gameObject.Equals(target)) 
                 {
 
-                    //hit.transform.SendMessage("Detectado", gameObject); CAMBIAR ESTADO HUIDO PARA QUE TAMBIEN SALGA SI DEJA DE DETECTAR
+                    
                     if (Vector3.Distance(transform.position, target.transform.position) > Vector3.Distance(transform.position, hit.transform.position))
                     {
                         hit.transform.SendMessage("Detectado", gameObject);
@@ -141,7 +141,7 @@ public class Agente : MonoBehaviour
             }
         }
 
-        if(llevandoArma)
+        if(llevandoArma && Vector3.Distance(transform.position,target.transform.position) <= distanciaDisparo)
         {
             arma.transform.LookAt(target.transform.position);
             if (!disparando) {
@@ -167,9 +167,9 @@ public class Agente : MonoBehaviour
     {
         foreach(Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Rastreando) // Si detecta un ladron, cambia al estado persiguiendo
+            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Rastreando)
             {
-                if (hit.transform.gameObject.CompareTag("Ladron")) // Probar que solo lo hace con ladrones 
+                if (hit.transform.gameObject.CompareTag("Ladron")) 
                 {
                     target = hit.transform.gameObject;
                     estadoActual = Estados.Persiguiendo;
@@ -181,7 +181,7 @@ public class Agente : MonoBehaviour
         {
             target = null;
             estadoActual = Estados.Patruyando;
-            agent.speed = 3.5f; // SERIALIZEDFIELD
+            agent.speed = velocidadBase; 
         }
     }
 
@@ -191,8 +191,7 @@ public class Agente : MonoBehaviour
         {
             CambiarDestino();
             estadoActual = Estados.Patruyando;
-            agent.stoppingDistance = 0f;
-            agent.speed = 3.5f;
+            agent.stoppingDistance = paradaBase;
         }
     }
 
@@ -218,7 +217,8 @@ public class Agente : MonoBehaviour
                 estadoActual = Estados.Encerrando;
                 target = null;
                 agent.stoppingDistance = encerrandoStopingDistance;
-                agent.speed = 3.5f;
+                agent.speed = velocidadBase;
+                agent.autoBraking = true;
             }  
                 
 
@@ -229,7 +229,7 @@ public class Agente : MonoBehaviour
             llevandoArma = true;
             arma.GetComponent<SphereCollider>().enabled = false;
             arma.transform.SetParent(transform);
-            arma.transform.localPosition = Vector3.right*0.6f; // LERP?
+            arma.transform.localPosition = Vector3.right*0.6f;
             arma.transform.rotation = transform.rotation;
         }
     }

@@ -22,9 +22,10 @@ public class Bala : MonoBehaviour
 
 
 
+    
+
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log("AEFE");
         Destroy(gameObject);
     }
 }

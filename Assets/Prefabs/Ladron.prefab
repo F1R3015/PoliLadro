@@ -274,6 +274,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   estadoActual: 0
+  duracionAturdido: 2
+  velocidadBase: 3.5
+  velocidadHuida: 4
 --- !u!135 &6713029585102169285
 SphereCollider:
   m_ObjectHideFlags: 0

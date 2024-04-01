@@ -3,24 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem.Android;
 using static UnityEngine.GraphicsBuffer;
 public class Ladron : MonoBehaviour
 {
 
-    Rigidbody rb;
     NavMeshAgent agent;
     RaycastHit hit;
-    enum Estados { Caminando, Huyendo, Atrapado, Escondido, Encerrado}
+    enum Estados { Caminando, Huyendo, Atrapado, Escondido, Encerrado, Aturdido } // Evitando
 
     GameObject[] puntosRecorrido;
 
     [SerializeField]
     Estados estadoActual;
+    
     GameObject jaula;
     GameObject enemigos;
-    GameObject caja;
-    [SerializeField]
     Transform[] rayCasters = new Transform[5];
+
+    Estados estadoPrevio;
+    [SerializeField]  float duracionAturdido;
+    float tiempoAturdido;
+
+    [SerializeField] float velocidadBase = 3.5f;
+    [SerializeField] float velocidadHuida = 4f;
+    [SerializeField] float tiempoEscondido = 7;
 
     // Start is called before the first frame update
 
@@ -31,7 +38,6 @@ public class Ladron : MonoBehaviour
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
         agent = GetComponent<NavMeshAgent>();
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
@@ -68,6 +74,9 @@ public class Ladron : MonoBehaviour
             case Estados.Escondido:
                 Escondiendo();
                 break;
+            case Estados.Aturdido:
+                Aturdido();
+                break;
             default:
                 Debug.Log(gameObject.name+"ERROR: ESTADO DESCONOCIDO");
                 break;
@@ -80,7 +89,7 @@ public class Ladron : MonoBehaviour
         {
             CambiarDestino();
         }
-        // Tambien por si detecta con raycast un agente cambiar a huyendo
+        // Tambien por si detecta con raycast un agente cambiar a huyendo / PARA ESTO EVITANDO
        
     }
 
@@ -102,7 +111,7 @@ public class Ladron : MonoBehaviour
         {
 
             
-            GetComponent<SphereCollider>().enabled = true; // PROBAR CON CAMBIAR LAYER???
+            GetComponent<SphereCollider>().enabled = true; 
             GetComponent<CapsuleCollider>().enabled = true;
             CambiarDestino();
             estadoActual = Estados.Caminando;
@@ -115,8 +124,10 @@ public class Ladron : MonoBehaviour
         NavMeshPath destino = CaminoHuida(enemigo, puntosRecorrido.ToList());
         agent.path = destino;
         estadoActual = Estados.Huyendo;
+        agent.autoBraking = false;
+        agent.speed = velocidadHuida;
     }
-    void Huyendo() // CAMBIAR VELOCIDAD DISTANCIA DE PARADO Y QUITAR AUTOBREAK
+    void Huyendo()
     {
         if(agent.remainingDistance <= agent.stoppingDistance)
         {
@@ -126,8 +137,10 @@ public class Ladron : MonoBehaviour
         if(enemigos.GetComponent<Agente>().getEstadoActual() != "Persiguiendo" && enemigos.GetComponent<Agente>().getEstadoActual() != "Rastreando")
         {
             estadoActual = Estados.Caminando;
+            agent.autoBraking = true;
             CambiarDestino();
             enemigos = null;
+            agent.speed = velocidadBase;
         }
        
         foreach (Transform t in rayCasters)
@@ -137,6 +150,7 @@ public class Ladron : MonoBehaviour
                 
                 estadoActual = Estados.Escondido;
                 agent.SetDestination(hit.transform.position);
+                //agent.autoBraking = true;
             }
 
             //AÑADIR PARA DETECTAR MULTILES ENEMIGOS
@@ -145,10 +159,26 @@ public class Ladron : MonoBehaviour
 
     void Escondiendo() 
     {
-        //SI DEJA DE SEGUIRME Y NO ESTOY EN LA CAJA SALGO DEL ESTADO
+        if(enemigos.GetComponent<Agente>().getEstadoActual() != "Persiguiendo" && enemigos.GetComponent<Agente>().getEstadoActual() != "Rastreando")
+        {
+            estadoActual = Estados.Caminando;
+            agent.autoBraking = true;
+            agent.speed = velocidadBase;
+            CambiarDestino();
+            enemigos = null;
+        }
     }
 
-    NavMeshPath CaminoHuida(GameObject enemigo,List<GameObject> recorrido) // CAMBIAR PARA TENER EN CUENTA MULTIPLES ENEMIGOS // CAMBIAR ENTERO
+    void Aturdido()
+    {
+        if(Time.time - tiempoAturdido >= duracionAturdido)
+        {
+            agent.isStopped = false;
+            estadoActual = estadoPrevio;
+        }
+    }
+
+    NavMeshPath CaminoHuida(GameObject enemigo,List<GameObject> recorrido) // CAMBIAR PARA TENER EN CUENTA MULTIPLES ENEMIGOS
     {
         
         if (recorrido.Count == 0)
@@ -179,30 +209,44 @@ public class Ladron : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
        
-        if (other.gameObject.CompareTag("Agente") && estadoActual != Estados.Escondido)
+        if (other.gameObject.CompareTag("Agente"))
         {
             if(other.gameObject.GetComponent<Agente>().getEstadoActual() != "Encerrando") { 
             estadoActual = Estados.Atrapado;
+            agent.enabled = true;
+            agent.autoBraking = true;
+            agent.speed = velocidadBase;
             agent.SetDestination(jaula.transform.position);
             GetComponent<SphereCollider>().enabled = false;
             GetComponent<CapsuleCollider>().enabled = false;
+            enemigos = null;
             }
         }
         if (other.gameObject.CompareTag("Caja") && (estadoActual == Estados.Huyendo || estadoActual == Estados.Escondido))
         {
             GetComponent<SphereCollider>().enabled = false;
             GetComponent<CapsuleCollider>().enabled = false;
+            agent.autoBraking = true;
+            agent.speed = velocidadBase;
             StartCoroutine(Esconderse());
+            enemigos = null;
         }
-        
+        if (other.gameObject.CompareTag("Bala") && (estadoActual == Estados.Huyendo || estadoActual == Estados.Caminando || estadoActual == Estados.Escondido))
+        {
+            tiempoAturdido = Time.time;
+            estadoPrevio = estadoActual;
+            estadoActual = Estados.Aturdido;
+            agent.isStopped = true;
+        }
     }
 
     IEnumerator Esconderse()
     {
-        yield return new WaitForSeconds(7);
+        yield return new WaitForSeconds(tiempoEscondido);
 
         CambiarDestino();
         estadoActual = Estados.Caminando;
+        agent.speed = velocidadBase;
         GetComponent<SphereCollider>().enabled = true;
 
         GetComponent<CapsuleCollider>().enabled = true;

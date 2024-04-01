@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4894160709734137360}
   - component: {fileID: 773024839813080836}
   - component: {fileID: 2017973436867093832}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Bala
   m_TagString: Bala
   m_Icon: {fileID: 0}
@@ -119,4 +119,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tiempoDesaparecer: 5
-  velocidad: 10
+  velocidad: 20

@@ -25,14 +25,18 @@ public class Jaula : MonoBehaviour
                 }
                 StartCoroutine(CerrarJaulaConDelay());
             }
+            else if(jaulaAbierta)
+            {
+                CerrarJaula();
+            }
         }
 
-        if (other.gameObject.CompareTag("Agente"))
+        if (other.gameObject.CompareTag("Agente") && jaulaAbierta)
         {
             CerrarJaula();
         }
     }   
-    // CUIDAO SI ENTRA EL POLICIA CON EL LADRON TIENE QUE CERRAR LA JAULA
+    
 
     public bool getJaulaAbierta()
     {

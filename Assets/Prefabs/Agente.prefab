@@ -375,9 +375,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0eae5c7962e1714398c684b588c0414, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugEstadoActual: {fileID: 0}
-  encerrandoStopingDistance: 0
-  velocidadCorriendo: 0
+  prefabBala: {fileID: 6025246619021374985, guid: 8622eefc7cd15564b96b2ee3c4ad7ec0, type: 3}
+  distanciaDisparo: 7
+  paradaBase: 0
+  encerrandoStopingDistance: 6
+  velocidadBase: 3.5
+  velocidadCorriendo: 5
 --- !u!1 &4297333223764716657
 GameObject:
   m_ObjectHideFlags: 0
