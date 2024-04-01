@@ -20,6 +20,9 @@ public class Agente : MonoBehaviour
     Vector3 ultimaPosicion;
     GameObject jaula;
     Transform[] rayCasters = new Transform[5];
+    GameObject arma;
+    [SerializeField]
+    GameObject prefabBala;
 
     [SerializeField]
     Text debugEstadoActual;
@@ -29,7 +32,7 @@ public class Agente : MonoBehaviour
     float velocidadCorriendo;
 
     bool llevandoArma;
-
+    bool disparando;
     // Start is called before the first frame update
     void Start()
     {
@@ -38,6 +41,7 @@ public class Agente : MonoBehaviour
         puntosRecorrido = GameObject.FindGameObjectsWithTag("Recorrido");
         jaula = GameObject.FindGameObjectWithTag("Jaula");
         llevandoArma = false;
+        disparando = false;
         int cont = 0;
         Transform[] t = GetComponentsInChildren<Transform>();
         for (int i = 0; i < t.Length; i++)
@@ -87,14 +91,14 @@ public class Agente : MonoBehaviour
 
     void Patruyando()
     {
-        if (agent.remainingDistance <= agent.stoppingDistance) // Si llega al destino se mueve hacia otro 
+        if (agent.remainingDistance <= agent.stoppingDistance) // Si llega al destino se mueve hacia otro  / ¿PROBLEMAS CON ARMA?
         {
             CambiarDestino();
         }
         
         foreach(Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron")) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
+            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron") && estadoActual == Estados.Patruyando) // Si detecta un ladron, cambia al estado persiguiendo / Mejorar detección (que sean varios raycast)
             {//En vez de tag, mejor layer?
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
@@ -109,33 +113,61 @@ public class Agente : MonoBehaviour
     void Persiguiendo() // EN PERSIGUIENDO AUMENTAR DISTANCIA DE PARADA
     {
         Debug.DrawRay(transform.position, target.transform.position - transform.position);
-        Seguir(target.transform.position);
+        Seguir(target);
         
         if (Physics.Raycast(transform.position, target.transform.position - transform.position, out hit) && !hit.transform.gameObject.CompareTag("Ladron")) // Si el objetivo desaparece, sigue hasta la ultima posicion vista / ¿CAMBIAR PARA QUE NO LO VEA?
         {
+            
             ultimaPosicion = target.transform.position;
-            agent.SetDestination(ultimaPosicion);
+            agent.SetDestination(ultimaPosicion + target.transform.forward*0.3f);
+            target = null;
             estadoActual = Estados.Rastreando;
         }
 
         foreach (Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo
+            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Persiguiendo) // 
             {
-                if (hit.transform.gameObject.CompareTag("Ladron") && Vector3.Distance(transform.position,target.transform.position) > Vector3.Distance(transform.position,hit.transform.position)) // Probar que solo lo hace con ladrones 
+                if (hit.transform.gameObject.CompareTag("Ladron") && !hit.transform.gameObject.Equals(target)) // Probar que solo lo hace con ladrones 
                 {
-                    target = hit.transform.gameObject;
+
+                    //hit.transform.SendMessage("Detectado", gameObject); CAMBIAR ESTADO HUIDO PARA QUE TAMBIEN SALGA SI DEJA DE DETECTAR
+                    if (Vector3.Distance(transform.position, target.transform.position) > Vector3.Distance(transform.position, hit.transform.position))
+                    {
+                        hit.transform.SendMessage("Detectado", gameObject);
+                        target = hit.transform.gameObject;
+                    }
                 }
             }
         }
 
+        if(llevandoArma)
+        {
+            arma.transform.LookAt(target.transform.position);
+            if (!disparando) {
+                arma.transform.localPosition -= Vector3.right * 0.6f;
+                arma.transform.localPosition += Vector3.forward * 0.7f;
+                disparando = true;
+                StartCoroutine(Dispara());
+            }
+        }
+
+    }
+
+    IEnumerator Dispara()
+    {
+        yield return new WaitForSeconds(1);
+        Instantiate(prefabBala, arma.transform.position + (arma.transform.forward), arma.transform.rotation);
+        llevandoArma = false;
+        disparando = false;
+        Destroy(arma);
     }
 
     void Rastreando()
     {
         foreach(Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit)) // Si detecta un ladron, cambia al estado persiguiendo
+            if (Physics.Raycast(transform.position, t.forward, out hit) && estadoActual == Estados.Rastreando) // Si detecta un ladron, cambia al estado persiguiendo
             {
                 if (hit.transform.gameObject.CompareTag("Ladron")) // Probar que solo lo hace con ladrones 
                 {
@@ -169,9 +201,9 @@ public class Agente : MonoBehaviour
         agent.SetDestination(puntosRecorrido[Random.Range(0, puntosRecorrido.Length - 1)].transform.position);
     }
 
-    void Seguir(Vector3 obj)
+    void Seguir(GameObject obj)
     {
-        agent.SetDestination(obj);
+        agent.SetDestination(obj.transform.position + obj.transform.forward*0.5f);
     }
 
 
@@ -193,7 +225,12 @@ public class Agente : MonoBehaviour
         }
         if (other.gameObject.CompareTag("Arma") && estadoActual != Estados.Encerrando && !llevandoArma)
         {
-            other.transform.SetParent(transform);
+            arma = other.gameObject;
+            llevandoArma = true;
+            arma.GetComponent<SphereCollider>().enabled = false;
+            arma.transform.SetParent(transform);
+            arma.transform.localPosition = Vector3.right*0.6f; // LERP?
+            arma.transform.rotation = transform.rotation;
         }
     }
 }
