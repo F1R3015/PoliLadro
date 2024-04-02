@@ -98,7 +98,6 @@ public class Ladron : MonoBehaviour
         {
             if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Agente") && Vector3.Angle(gameObject.transform.position - agent.path.corners[getActualCorner(agent.path.corners)], gameObject.transform.position - hit.point) >= 45 && Vector3.Angle(agent.transform.forward,agent.transform.position - transform.position) <= 30)
             {
-                Debug.Log("HAY un AGENTE");
                 agent.path = CaminoHuida(hit.transform.gameObject,puntosRecorrido.ToList());
                 
 
