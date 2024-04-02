@@ -157,7 +157,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
     IEnumerator Dispara()
     {
         
-        arma.transform.LookAt(target.transform.position+target.transform.position*0.5f);
+        arma.transform.LookAt(target.transform.position+target.transform.forward);
         yield return new WaitForSeconds(0.5f);
         Instantiate(prefabBala, arma.transform.position + (arma.transform.forward)*0.5f, arma.transform.rotation);
         yield return new WaitForSeconds(1);
