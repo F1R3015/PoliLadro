@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
@@ -93,7 +94,32 @@ public class Ladron : MonoBehaviour
             CambiarDestino();
         }
         // Tambien por si detecta con raycast un agente cambiar a huyendo / PARA ESTO EVITANDO
-       
+        foreach (Transform t in rayCasters)
+        {
+            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Agente") && Vector3.Angle(gameObject.transform.position - agent.path.corners[getActualCorner(agent.path.corners)], gameObject.transform.position - hit.point) >= 45 && Vector3.Angle(agent.transform.forward,agent.transform.position - transform.position) <= 30)
+            {
+                Debug.Log("HAY un AGENTE");
+                agent.path = CaminoHuida(hit.transform.gameObject,puntosRecorrido.ToList());
+                
+
+            }
+
+            //AÑADIR PARA DETECTAR MULTILES ENEMIGOS
+        }
+    }
+
+     int getActualCorner(Vector3[] corners)
+    {
+        int i;
+
+        for(i = 0; i < corners.Length-1;i++)
+        {
+            if(Vector3.Angle(transform.forward,transform.position - corners[i]) <= 5)
+            {
+                return i;
+            }
+        }
+        return i;
     }
 
     void Atrapado()
@@ -110,10 +136,16 @@ public class Ladron : MonoBehaviour
 
     void Encerrado()
     {
-        if(jaula.GetComponent<Jaula>().getJaulaAbierta())
+
+        if (agent.remainingDistance <= agent.stoppingDistance)
+        {
+            agent.isStopped = true;
+        }
+
+        if (jaula.GetComponent<Jaula>().getJaulaAbierta())
         {
 
-            
+            agent.isStopped = false;
             GetComponent<SphereCollider>().enabled = true; 
             GetComponent<CapsuleCollider>().enabled = true;
             CambiarDestino();
@@ -124,8 +156,11 @@ public class Ladron : MonoBehaviour
     {
         
         enemigos = enemigo;
-        NavMeshPath destino = CaminoHuida(enemigo, puntosRecorrido.ToList());
-        agent.path = destino;
+        if (Vector3.Angle(gameObject.transform.position - agent.path.corners[getActualCorner(agent.path.corners)], gameObject.transform.position - enemigo.transform.position) <= anguloCamino)
+        {
+            NavMeshPath destino = CaminoHuida(enemigo, puntosRecorrido.ToList());
+            agent.path = destino;
+        }
         estadoActual = Estados.Huyendo;
         
         agent.speed = velocidadHuida;
@@ -150,7 +185,7 @@ public class Ladron : MonoBehaviour
        
         foreach (Transform t in rayCasters)
         {
-            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Caja") && estadoActual == Estados.Huyendo)
+            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Caja") && estadoActual == Estados.Huyendo && Vector3.Angle(gameObject.transform.position - enemigos.transform.position, gameObject.transform.position - hit.point) >= 45)
             {
                 
                 estadoActual = Estados.Escondido;
@@ -218,15 +253,16 @@ public class Ladron : MonoBehaviour
         if (other.gameObject.CompareTag("Agente"))
         {
             if(other.gameObject.GetComponent<Agente>().getEstadoActual() != "Encerrando") { 
-            estadoActual = Estados.Atrapado;
+           
             agent.enabled = true;
-            
+            agent.isStopped = false;
             agent.speed = velocidadBase;
             agent.SetDestination(jaula.transform.position);
             GetComponent<SphereCollider>().enabled = false;
             GetComponent<CapsuleCollider>().enabled = false;
             enemigos = null;
             agent.stoppingDistance = distanciaParadaBase;
+            estadoActual = Estados.Atrapado;
             }
         }
         if (other.gameObject.CompareTag("Caja") && (estadoActual == Estados.Huyendo || estadoActual == Estados.Escondido))
