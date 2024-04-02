@@ -12,7 +12,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
     NavMeshAgent agent;
     RaycastHit hit;
 
-    enum Estados { Patruyando, Persiguiendo, Rastreando, Encerrando }
+    enum Estados { Patrullando, Persiguiendo, Rastreando, Encerrando }
     Estados estadoActual;
 
     GameObject[] puntosRecorrido;
@@ -63,8 +63,8 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
     {
         switch (estadoActual)
         {
-            case Estados.Patruyando:
-                Patruyando();
+            case Estados.Patrullando:
+                Patrullando();
                 break;
 
             case Estados.Persiguiendo:
@@ -87,7 +87,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
 
     }
 
-    void Patruyando()
+    void Patrullando()
     {
         if (agent.remainingDistance <= agent.stoppingDistance) // Si llega al destino se mueve hacia otro
         {
@@ -96,7 +96,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
         
         foreach(Transform t in rayCasters)
         {
-            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron") && estadoActual == Estados.Patruyando) // Si detecta un ladron, cambia al estado persiguiendo
+            if (Physics.Raycast(transform.position, t.forward, out hit) && hit.transform.gameObject.CompareTag("Ladron") && estadoActual == Estados.Patrullando) // Si detecta un ladron, cambia al estado persiguiendo
             {
                 target = hit.transform.gameObject;
                 estadoActual = Estados.Persiguiendo;
@@ -183,7 +183,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
         if(agent.remainingDistance <= agent.stoppingDistance) 
         {
             target = null;
-            estadoActual = Estados.Patruyando;
+            estadoActual = Estados.Patrullando;
             agent.speed = velocidadBase; 
         }
     }
@@ -193,7 +193,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
         if(agent.remainingDistance <= agent.stoppingDistance)
         {
             CambiarDestino();
-            estadoActual = Estados.Patruyando;
+            estadoActual = Estados.Patrullando;
             agent.stoppingDistance = paradaBase;
         }
     }
