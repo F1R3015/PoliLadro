@@ -19,7 +19,7 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
     GameObject target;
     Vector3 ultimaPosicion;
     GameObject jaula;
-    Transform[] rayCasters = new Transform[5];
+    Transform[] rayCasters = new Transform[7];
     GameObject arma;
     [SerializeField]
     GameObject prefabBala;
@@ -156,6 +156,9 @@ public class Agente : MonoBehaviour // TENDRIA QUE IR POR ARMA
 
     IEnumerator Dispara()
     {
+        
+        arma.transform.LookAt(target.transform.position+target.transform.position*0.5f);
+        yield return new WaitForSeconds(0.5f);
         Instantiate(prefabBala, arma.transform.position + (arma.transform.forward)*0.5f, arma.transform.rotation);
         yield return new WaitForSeconds(1);
         llevandoArma = false;
