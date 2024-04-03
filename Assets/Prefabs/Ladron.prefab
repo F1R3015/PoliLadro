@@ -280,7 +280,7 @@ MonoBehaviour:
   tiempoEscondido: 7
   distanciaParadaBase: 0
   distanciaParadaHuida: 2
-  anguloCamino: 30
+  anguloCamino: 45
 --- !u!135 &6713029585102169285
 SphereCollider:
   m_ObjectHideFlags: 0

@@ -93,17 +93,17 @@ public class Ladron : MonoBehaviour
         {
             CambiarDestino();
         }
-        // Tambien por si detecta con raycast un agente cambiar a huyendo / PARA ESTO EVITANDO
+        // Tambien por si detecta con raycast un agente cambiar a huyendo 
         foreach (Transform t in rayCasters)
         {
-            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Agente") && Vector3.Angle(gameObject.transform.position - agent.path.corners[getActualCorner(agent.path.corners)], gameObject.transform.position - hit.point) >= 45 && Vector3.Angle(agent.transform.forward,agent.transform.position - transform.position) <= 30)
+            if (Physics.Raycast(gameObject.transform.position, t.transform.forward, out hit) && hit.transform.CompareTag("Agente"))
             {
                 agent.path = CaminoHuida(hit.transform.gameObject,puntosRecorrido.ToList());
                 
 
             }
 
-            //AÑADIR PARA DETECTAR MULTILES ENEMIGOS
+            
         }
     }
 
@@ -113,7 +113,7 @@ public class Ladron : MonoBehaviour
 
         for(i = 0; i < corners.Length-1;i++)
         {
-            if(Vector3.Angle(transform.forward,transform.position - corners[i]) <= 5)
+            if(Vector3.Angle(transform.forward, corners[i] - transform.position ) <= 5)
             {
                 return i;
             }
@@ -155,7 +155,7 @@ public class Ladron : MonoBehaviour
     {
         
         enemigos = enemigo;
-        if (Vector3.Angle(gameObject.transform.position - agent.path.corners[getActualCorner(agent.path.corners)], gameObject.transform.position - enemigo.transform.position) <= anguloCamino)
+        if (Vector3.Angle( agent.path.corners[getActualCorner(agent.path.corners)]- gameObject.transform.position,   enemigo.transform.position - gameObject.transform.position) <= anguloCamino)
         {
             NavMeshPath destino = CaminoHuida(enemigo, puntosRecorrido.ToList());
             agent.path = destino;
@@ -167,7 +167,7 @@ public class Ladron : MonoBehaviour
     }
     void Huyendo()
     {
-        if(agent.remainingDistance <= agent.stoppingDistance)
+        if(agent.remainingDistance-2 <= agent.stoppingDistance)
         {
             
             agent.path = CaminoHuida(enemigos, puntosRecorrido.ToList());
@@ -229,8 +229,10 @@ public class Ladron : MonoBehaviour
         NavMeshPath path = new NavMeshPath();
         GameObject puntoElegido = puntosRecorrido[Random.Range(0, recorrido.Count - 1)];
         NavMesh.CalculatePath(gameObject.transform.position,puntoElegido.transform.position,NavMesh.AllAreas, path);
-        if(Vector3.Angle(gameObject.transform.position - path.corners[0],gameObject.transform.position - enemigo.transform.position) <= anguloCamino)
+        if(Vector3.Angle( path.corners[0] - gameObject.transform.position,  enemigo.transform.position - gameObject.transform.position) <= anguloCamino)
         {
+            Debug.DrawRay(gameObject.transform.position, path.corners[0], Color.black, 10f);
+            Debug.DrawRay(gameObject.transform.position, enemigo.transform.position, Color.white, 10f);
             recorrido.Remove(puntoElegido);
             return CaminoHuida(enemigo, recorrido);
         }
